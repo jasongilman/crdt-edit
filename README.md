@@ -1,6 +1,6 @@
 # crdt-edit
 
-A collaborative text editor built on CRDTs
+An experimental collaborative text editor built on CRDTs
 
 ## Usage
 

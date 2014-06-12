@@ -85,10 +85,11 @@
   (to-logoot-string
     [pc]
     (str "(" 
-         (to-logoot-string position))
+         (to-logoot-string (:position pc))
          ","
-         character
-         ")"))
+         (:character pc)
+         ")")))
+
 
 (defn pos-id
   "Creates a new position idenfier"
@@ -106,6 +107,15 @@
   (->PositionedCharacter
     c
     (apply position site ids)))
+
+(def DOCUMENT_BEGINNING
+  "Special positioned character representing the beginning of the document"
+  (pos-char \B :begin 0))
+
+(def DOCUMENT_END
+  "Special positioned character representing the end of the document"
+  (pos-char \E :end Integer/MAX_VALUE))
+
 
 (comment 
   
@@ -145,6 +155,8 @@
        ; (pos-id 3 :a)
        ]))
   
+  (to-logoot-string (pos-char \a :site 0))
+  
   (-> (create)
       (insert (pos-char \a :site 0))
       (insert (pos-char \b :site 1))
@@ -165,9 +177,13 @@
       ;; Q: Should site matter? Because in our implementation it does.
       (delete (position :site 1 6))
       
-      doc-string
-      ; logoot-string
+      ; doc-string
+      logoot-string
       println
+      
+      ; (position-at-index 2)
+      ; to-logoot-string
+      ; println
       )
   
   
@@ -182,23 +198,33 @@
 (defn create
   "Returns a new empty data structure"
   []
-  (sorted-set))
+  (sorted-set DOCUMENT_BEGINNING DOCUMENT_END))
 
 (defn doc-string
   "Returns the document as a string"
   [document]
-  (apply str (map :character document)))
+  (apply str (map :character (drop-last (drop 1 document)))))
 
 (defn logoot-string
   "Returns the document as a string as represented in the logoot paper"
   [document]
   (str/join "\n" (map to-logoot-string document)))
 
+(defn position-at-index
+  "Returns the position of the document at the given index"
+  [document idx]
+  (some-> document
+          seq
+          (nth idx)
+          :position))
+
 (defn insert
+  "TODO document"
   [document pc]
   (conj document pc))
 
 (defn delete
+  "TODO document"
   [document position]
   (disj document (->PositionedCharacter nil position)))
 

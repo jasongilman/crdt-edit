@@ -19,7 +19,7 @@
 (def position-gen
   "Position generator"
   (gen/fmap l/->Position
-    (gen/vector position-identifier-gen 1 5)))
+            (gen/vector position-identifier-gen 1 5)))
 
 (def two-unique-positions-in-order
   "Generator of two unique positions in sorted order."
@@ -34,12 +34,23 @@
   [^long n1 ^long n2]
   (int (/ (+ n1 n2) 2)))
 
+;; Tests that the random between function generates a value between start and end
+;; exclusive other values.
+(defspec random-between-spec 1000
+  (for-all [betweens (gen/such-that
+                       (fn [[v1 v2]]
+                         (> (- v2 v1) 1))
+                       (gen/fmap sort 
+                                 (gen/tuple gen/int gen/int)))]
+    (let [[s e] betweens
+          middle-val (l/random-between s e)]
+      (< s middle-val e))))
+
 (defspec intermediate-position-spec 1000
   (for-all [positions two-unique-positions-in-order
             site site-gen]
     (let [[pos1 pos2] positions
-          ;; TODO only temporarily using mid for now.
-          middle-pos (l/intermediate-position site pos1 pos2 mid)
+          middle-pos (l/intermediate-position site pos1 pos2)
           expected-order [pos1 middle-pos pos2]]
       (and 
         (= expected-order (sort expected-order))
@@ -50,9 +61,9 @@
   "Helps build positions. Takes a sequence a position int site pairs"
   [& pairs]
   (->> pairs
-      (partition 2)
-      (map (partial apply l/->PositionIdentifier))
-      l/->Position))
+       (partition 2)
+       (map (partial apply l/->PositionIdentifier))
+       l/->Position))
 
 
 (def max-int Integer/MAX_VALUE)

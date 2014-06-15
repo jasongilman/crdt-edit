@@ -138,20 +138,16 @@
   [document]
   (str/join "\n" (map to-logoot-string document)))
 
-(defn- random-between
+(defn random-between
   "Returns a random value between s and e exclusive of their values"
   [s e]
-  ;; TODO
-  (throw (Exception. "TODO"))
-  )
+  (+ s (inc (rand-int (dec (- e s))))))
 
 (defn- sites-ordered?
   "Returns true if the sites are naturally ordered in the order given."
   [site1 site2 site3]
   (and (< (compare site1 site2) 0)
        (< (compare site2 site3) 0)))
-
-(compare :a :b)
 
 (defn- intermediate-of-id-pair
   "TODO

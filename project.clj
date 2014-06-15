@@ -7,7 +7,7 @@
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
                  [seesaw "1.4.4"]]
   
-  :aot [crdt-edit.RedirectingDocument]
+  :aot [crdt-edit.LogootSwingDocument]
   
   :profiles 
   {:dev {:source-paths ["dev" "src"]

@@ -1,10 +1,10 @@
 (ns crdt-edit.gui
   (:require [crdt-edit.logoot :as l]
-            [crdt-edit.RedirectingDocument]
+            [crdt-edit.LogootSwingDocument]
             [seesaw.core :as sw]
             [seesaw.dev :as sd])
   (:import javax.swing.text.DocumentFilter
-           crdt_edit.RedirectingDocument))
+           crdt_edit.LogootSwingDocument))
 
 ;; TODO we need to use a document filter here. 
 ;; How do make changes from updates to the logoot from the remote end but at the same time 
@@ -25,6 +25,8 @@
       [fb offset length text attrs]
       ))
 
+
+
 (defn create
   "Creates an instance of the GUI"
   [logoot-doc text-area document]
@@ -36,7 +38,7 @@
         ;           ; :listen [:document handle-doc-event]
         ;           )
         ;; TODO pass in channel on which to write changes.
-        ; document (RedirectingDocument. nil)
+        ; document (LogootSwingDocument. nil)
         ]
     (.setDocument text-area document)
     (sw/frame :title "CRDT Edit",
@@ -54,8 +56,15 @@
   (def t (sw/text :text ""
                   :multi-line? true
                   :editable? true))
-  (def d (RedirectingDocument. nil))
+  (def d (LogootSwingDocument. :jason (l/create)))
   (def f (create nil t d))
+  (display f)
+  
+  (-> d
+      (.data)
+      deref
+      :logoot-doc
+      l/doc-string)
   
   ;; TODO implement the following capabilities 
   ;;  - assume it's only a single character at a time
@@ -67,12 +76,12 @@
   ;; Idea! We can test this from within one REPLs by creating and displaying two frames
   ;; that are connected by the two channels.
   
-  ;; LogootDocument
+  ;; LogootSwingDocument
   ;; extends PlainDocument to add Logoot tracking of changes
   ;; logoot document is in an atom
   
   ;; External changes to the logoot document
-  ;;; Changes can come in to the logoot doc via a method that we add on LogootDocument
+  ;;; Changes can come in to the logoot doc via a method that we add on LogootSwingDocument
   ;;; We would first set the write lock, then grab the caret position as a logoot position
   ;;; Then find the logoot position where the text goes and add it. After adding it we
   ;;; would update the caret position to it's new position (covert logoot position to index)
@@ -94,6 +103,5 @@
   ;; Can position the caret after inserting text since that won't change it.
   (.setCaretPosition t 10)
   
-  (display f)
   
   )

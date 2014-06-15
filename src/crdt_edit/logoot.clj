@@ -178,15 +178,6 @@
       :else  
       (pos-id (random-mid pos1 pos2) site))))
 
-(comment 
-  (intermediate-of-id-pair 
-    :a
-    {:pos 1 :site :a}
-    {:pos 0 :site :a}
-    #(int (/ (+ %1 %2) 2)))
-  
-)
-
 
 (defn intermediate-position
   "Creates an intermediate position between pos1 and pos2. Site is the site of the current agent. 
@@ -232,8 +223,17 @@
   [document idx]
   (some-> document
           seq
-          (nth idx)
+          ;; increment the index since logoot documents have a position representing the beginning 
+          ;; of the document
+          (nth (inc idx))
           :position))
+
+(defn new-position-at-index
+  "Returns a new position between the characters at the index and 1 before the index."
+  [site document idx]
+  (let [before-pos (position-at-index document (dec idx))
+        after-pos (position-at-index document idx)]
+    (intermediate-position site before-pos after-pos)))
 
 (defn insert
   "TODO document"

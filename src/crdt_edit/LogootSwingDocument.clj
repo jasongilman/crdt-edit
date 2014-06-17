@@ -1,27 +1,31 @@
 (ns crdt-edit.LogootSwingDocument
-  "TODO document me"
+  "Coordinates changes between a java Swing Text Document and a Logoot Document. Utilizes
+  the locking built into swing to maintain the same text in both."
   (:gen-class :extends javax.swing.text.PlainDocument
-              :constructors {[Object Object] []}
+              :constructors {[Object Object Object javax.swing.text.JTextComponent] []}
               
               ;; The bypass methods can bypass the capturing done in insertString and remove
               :exposes-methods {insertString bypassInsertString
                                 remove bypassRemove
                                 writeLock writeLockSuper
                                 writeUnlock writeUnlockSuper}
+              :methods [[insertPositionedCharacter [Object] void]]
               :init init
-              :state data))
+              :state data)
+  (:import javax.swing.text.JTextComponent))
 
 (import 'crdt_edit.LogootSwingDocument)
 
 (defn- -init
-  [site logoot-doc]
+  [site logoot-doc outgoing text-area]
   ;; Required here to avoid AOT compiling everything.
-  (require 'crdt-edit.logoot-document-helper)
-  ;; TODO add more here eventually like a channel to send outgoing changes and an incoming channel
+  (require 'crdt-edit.logoot-swing-document-helper)
   [[] (atom {:site site
-             :logoot-doc logoot-doc})])
+             :logoot-doc logoot-doc
+             :outgoing outgoing
+             :text-area text-area})])
 
-(defn -insertString 
+(defn- -insertString 
   "Overrides insertString on the super class."
   [this offs string attrs]
   (println "Attempting to insert" string "at position" offs)
@@ -30,7 +34,9 @@
   
   (try 
     ;; Update the logoot document
-    (let [helper-fn (var-get (find-var 'crdt-edit.logoot-document-helper/insert-string))]
+    (let [helper-fn (var-get 
+                      (find-var 
+                        'crdt-edit.logoot-swing-document-helper/insert-typed-string))]
       (helper-fn (.data this) offs string))
     
     ;; Call bypassInsertString to cause the GUI to update ETC 
@@ -39,10 +45,38 @@
     (finally 
       (.writeUnlockSuper this))))
 
-(defn -remove 
+(defn- -insertPositionedCharacter
+  [this pos-char]
+  (println "Attempting to insert positioned character" (pr-str pos-char))
+  (.writeLockSuper this)
+  (try 
+    ;; Update the logoot document
+    (let [helper-fn (var-get 
+                      (find-var 
+                        'crdt-edit.logoot-swing-document-helper/insert-positioned-character))
+          [offset string] (helper-fn (.data this) pos-char)
+          ^JTextComponent text-area (:text-area @(.data this))
+          initial-caret-position (.getCaretPosition text-area)]
+      
+      ;; Call bypassInsertString to cause the GUI to update ETC 
+      (.bypassInsertString this offset string nil)
+
+      ;; Calling insert string on the document doesn't update the caret position so we have do it 
+      ;; manually      
+      (when (<= offset initial-caret-position)
+        (.setCaretPosition text-area (inc initial-caret-position))))
+    (finally 
+      (.writeUnlockSuper this))))
+
+(defn- -remove 
   "Overrides remove on the super class."
   [this offs len]
-  (println "Attempting to remove" len "characters at position" offs))
+  (println "Attempting to remove" len "characters at position" offs)
+  ;; TODO handle removes. 
+  ;; Get the position at the index
+  ;; Call delete with it.
+  
+  )
 
 (comment 
   

@@ -218,7 +218,7 @@
              ;; Keep searching
              (recur (rest pairs-left) (conj intermediate-ids id1)))))))))
 
-(defn position-at-index
+(defn index->position
   "Returns the position of the document at the given index"
   [document idx]
   (some-> document
@@ -228,11 +228,23 @@
           (nth (inc idx))
           :position))
 
+(defn position->index
+  "Returns the index in the document of the given position. Returns nil if not in document."
+  [document position]
+  (some->> document
+       (keep-indexed (fn [index item]
+                       (when (= position (:position item))
+                         index)))
+       first
+       ;; Decrement the index since logoot documents have a position representing the beginning
+       ;; of the document.
+       dec))
+
 (defn new-position-at-index
   "Returns a new position between the characters at the index and 1 before the index."
   [site document idx]
-  (let [before-pos (position-at-index document (dec idx))
-        after-pos (position-at-index document idx)]
+  (let [before-pos (index->position document (dec idx))
+        after-pos (index->position document idx)]
     (intermediate-position site before-pos after-pos)))
 
 (defn insert
@@ -247,74 +259,3 @@
 
 
 
-(comment 
-  
-  (lexi-compare [1 2 3] [1 2]) ; = 1 meaning 123 comes after 12
-  (lexi-compare [1 2] [1 2 3]) ; = -1 meaning 1 2 comes before 1 2 3
-  
-  ;; Normal comparisons of different lengths work
-  (lexi-compare [1 2 3] [1 5]) 
-  (compare "123" "15") 
-  (compare "abc" "ad")
-  
-  (lexi-compare [1 5] [1 2 3])
-  (compare "15" "123")
-  
-  
-  (defn test-compare
-    [p1 p2]
-    (let [result (compare p1 p2)]
-      (case result
-        -1 "p1 is less than p2"
-        0 "p1 is equal to p2"
-        1 "p1 is greater than p2")))
-  
-  (test-compare 
-    (->PositionedCharacter 
-      \a
-      [(pos-id 0 :a)
-       (pos-id 1 :a)
-       (pos-id 2 :b)
-       ; (pos-id 3 :a)
-       ])
-    (->PositionedCharacter 
-      \a
-      [(pos-id 0 :a)
-       (pos-id 1 :a)
-       (pos-id 2 :a)
-       ; (pos-id 3 :a)
-       ]))
-  
-  (to-logoot-string (pos-char \a :site 0))
-  
-  (-> (create)
-      (insert (pos-char \a :site 0))
-      (insert (pos-char \b :site 1))
-      (insert (pos-char \c :site 2))
-      (insert (pos-char \d :site 3))
-      
-      ;; between b and c
-      (insert (pos-char \q :site 1 5))
-      
-      ;; between q and c
-      (insert (pos-char \r :site 1 6))
-      
-      ;; a concurrent edit from another site
-      ;; placed after :site
-      (insert (pos-char \t :siteb 1 6))
-      
-      ;; Now we delete the r 
-      ;; Q: Should site matter? Because in our implementation it does.
-      (delete (position :site 1 6))
-      
-      ; doc-string
-      logoot-string
-      println
-      
-      ; (position-at-index 2)
-      ; to-logoot-string
-      ; println
-      )
-  
-  
-  )

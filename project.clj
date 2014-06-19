@@ -5,9 +5,11 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
-                 [seesaw "1.4.4"]]
+                 [seesaw "1.4.4"]
+                 [compojure "1.1.8"]
+                 [fogus/ring-edn "0.2.0"]]
   
-  :aot [crdt-edit.LogootSwingDocument]
+  :aot [crdt-edit.gui.LogootSwingDocument]
   
   :profiles 
   {:dev {:source-paths ["dev" "src"]

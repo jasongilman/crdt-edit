@@ -1,4 +1,4 @@
-(ns crdt-edit.LogootSwingDocument
+(ns crdt-edit.gui.LogootSwingDocument
   "Coordinates changes between a java Swing Text Document and a Logoot Document. Utilizes
   the locking built into swing to maintain the same text in both."
   (:gen-class :extends javax.swing.text.PlainDocument
@@ -14,12 +14,12 @@
               :state data)
   (:import javax.swing.text.JTextComponent))
 
-(import 'crdt_edit.LogootSwingDocument)
+(import 'crdt_edit.gui.LogootSwingDocument)
 
 (defn- -init
   [site logoot-doc outgoing text-area]
   ;; Required here to avoid AOT compiling everything.
-  (require 'crdt-edit.logoot-swing-document-helper)
+  (require 'crdt-edit.gui.logoot-swing-document-helper)
   [[] (atom {:site site
              :logoot-doc logoot-doc
              :outgoing outgoing
@@ -36,7 +36,7 @@
     ;; Update the logoot document
     (let [helper-fn (var-get 
                       (find-var 
-                        'crdt-edit.logoot-swing-document-helper/insert-typed-string))]
+                        'crdt-edit.gui.logoot-swing-document-helper/insert-typed-string))]
       (helper-fn (.data this) offs string))
     
     ;; Call bypassInsertString to cause the GUI to update ETC 
@@ -53,7 +53,7 @@
     ;; Update the logoot document
     (let [helper-fn (var-get 
                       (find-var 
-                        'crdt-edit.logoot-swing-document-helper/insert-positioned-character))
+                        'crdt-edit.gui.logoot-swing-document-helper/insert-positioned-character))
           [offset string] (helper-fn (.data this) pos-char)
           ^JTextComponent text-area (:text-area @(.data this))
           initial-caret-position (.getCaretPosition text-area)]

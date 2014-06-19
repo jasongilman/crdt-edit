@@ -1,4 +1,4 @@
-(ns crdt-edit.logoot-swing-document-helper
+(ns crdt-edit.gui.logoot-swing-document-helper
   "Provides implementations of the functions in the LogootDocument class"
   (:require [crdt-edit.logoot :as l]
             [clojure.core.async :as a :refer [go <! >!]]))

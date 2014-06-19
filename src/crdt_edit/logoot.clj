@@ -90,7 +90,6 @@
          (:character pc)
          ")")))
 
-
 (defn pos-id
   "Creates a new position idenfier"
   [pos site]

@@ -1,17 +1,14 @@
-(ns crdt-edit.gui
-  (:require [crdt-edit.logoot :as l]
-            [crdt-edit.LogootSwingDocument]
+(ns crdt-edit.gui.frame
+  (:require #_[crdt-edit.gui.LogootSwingDocument]
             [seesaw.core :as sw]
-            [seesaw.dev :as sd]
-            [clojure.core.async :as async]
-            [crdt-edit.control :as control])
-  (:import javax.swing.text.DocumentFilter
-           crdt_edit.LogootSwingDocument))
+            [seesaw.dev :as sd])
+  (:import crdt_edit.gui.LogootSwingDocument))
 
 
 (defn create
-  "Creates an instance of the GUI"
-  [site logoot-doc outgoing incoming]
+  "Creates an instance of the GUI. Returns a map of the swing document
+  and the frame."
+  [site logoot-doc outgoing]
   
   (let [text-area (sw/text
                     :text ""
@@ -20,12 +17,10 @@
         document (LogootSwingDocument. site logoot-doc outgoing text-area)]
     (.setDocument text-area document)
     
-    ;; Start asynchronously processing incoming changes
-    (control/process-remote-updates incoming document)
-    
-    (sw/frame :title "CRDT Edit",
-              :content (sw/scrollable text-area)
-              :on-close :dispose)))
+    {:logoot-swing-doc document
+     :frame  (sw/frame :title "CRDT Edit",
+                       :content (sw/scrollable text-area)
+                       :on-close :dispose)}))
 
 (defn display
   [frame]
@@ -34,8 +29,16 @@
         sw/pack!
         sw/show!)))
 
+(defn close
+  [frame]
+  (sw/invoke-later
+    (sw/dispose! frame)))
+
 (comment 
   
+  ;; Example of creating two collaborating guis.
+  ;; TODO do the same thing with systems after creating systems.
+  ;; We'll have two systems running on different ports.
   (do
     (def doc1 (l/create))
     (def doc2 (l/create))
@@ -52,4 +55,4 @@
       
       ))
   
-)
+  )

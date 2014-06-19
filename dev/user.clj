@@ -29,6 +29,9 @@
                                (when system 
                                  (stop-fn system))))))
 
+(defn print-logoot-doc
+  []
+  ((get-var 'crdt-edit.system/print-logoot-doc)))
 
 (defn reset
   []

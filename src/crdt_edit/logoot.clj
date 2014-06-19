@@ -140,7 +140,10 @@
 (defn random-between
   "Returns a random value between s and e exclusive of their values"
   [s e]
-  (+ s (inc (rand-int (dec (- e s))))))
+  ;; Using 100 as a typical cap for how far forward we'll jump. This is to avoid a problem
+  ;; where many typical inserts in a row will generate numbers close to the Integer/MAX_VALUE.
+  (let [e (min (+ s 100) e)]
+    (+ s (inc (rand-int (dec (- e s)))))))
 
 (defn- sites-ordered?
   "Returns true if the sites are naturally ordered in the order given."

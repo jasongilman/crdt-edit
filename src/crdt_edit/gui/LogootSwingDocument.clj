@@ -28,8 +28,6 @@
 (defn- -insertString 
   "Overrides insertString on the super class."
   [this offs string attrs]
-  (println "Attempting to insert" string "at position" offs)
-  
   (.writeLockSuper this)
   
   (try 
@@ -47,7 +45,6 @@
 
 (defn- -insertPositionedCharacter
   [this pos-char]
-  (println "Attempting to insert positioned character" (pr-str pos-char))
   (.writeLockSuper this)
   (try 
     ;; Update the logoot document

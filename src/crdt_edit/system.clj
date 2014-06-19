@@ -21,8 +21,6 @@
      ;; TODO
      :frame frame
      ;; TODO
-     :logoot-doc logoot-doc
-     ;; TODO
      :incoming incoming
      ;; TODO
      :outgoing outgoing
@@ -32,6 +30,18 @@
      
      ;; Running flag is used to signal go blocks that we are done.
      :running-flag (atom false)}))
+
+(defn get-logoot-doc
+  [system]
+  (-> system
+      :logoot-swing-doc
+      (.data)
+      deref
+      :logoot-doc))
+
+(defn print-logoot-doc
+  [system]
+  (println (logoot/logoot-string (get-logoot-doc system))))
 
 (defn start
   "Starts the system and returns it."

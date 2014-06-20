@@ -2,11 +2,12 @@
   (:require [crdt-edit.gui.frame :as frame]
             [crdt-edit.logoot :as logoot]
             [crdt-edit.control :as control]
-            [clojure.core.async :as async]))
+            [clojure.core.async :as async]
+            [crdt-edit.api.routes :as api]))
 
 (defn create
   "Creates an initial system"
-  [site collaborators]
+  [site collaborators port]
   (let [outgoing (async/chan 10)
         incoming (async/chan 5)
         logoot-doc (logoot/create)
@@ -15,7 +16,7 @@
     {;; TODO
      :site site
      ;; TODO
-     :server nil
+     :server (api/create-server port)
      ;; TODO
      :logoot-swing-doc logoot-swing-doc
      ;; TODO
@@ -56,13 +57,13 @@
     ;; Start asynchronously processing incoming changes
     (control/process-incoming system)
     
-    ;; TODO send outgoing changes to another server
-    ; (control/process-outgoing system)
+    ;; Send outgoing changes to another server
+    (control/process-outgoing system)
     
     ;; Display the GUI
     (frame/display frame)
     
-    system))
+    (update-in system [:server] api/start-server system)))
 
 (defn stop
   "Stops the system and returns it"
@@ -78,4 +79,4 @@
     ;; Hide the gui
     (frame/close frame)
     
-    system))
+    (update-in system [:server] api/stop-server system)))

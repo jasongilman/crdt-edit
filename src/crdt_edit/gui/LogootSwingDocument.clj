@@ -35,7 +35,7 @@
     ;; Update the logoot document
     (let [helper-fn (var-get 
                       (find-var 
-                        'crdt-edit.gui.logoot-swing-document-helper/insert-typed-string))]
+                        'crdt-edit.gui.logoot-swing-document-helper/handle-insert-string))]
       (helper-fn (.data this) offs string))
     
     ;; Call bypassInsertString to cause the GUI to update ETC 
@@ -52,7 +52,7 @@
     ;; Update the logoot document
     (let [helper-fn (var-get 
                       (find-var 
-                        'crdt-edit.gui.logoot-swing-document-helper/insert-positioned-character))
+                        'crdt-edit.gui.logoot-swing-document-helper/handle-insert-positioned-character))
           [offset string] (helper-fn (.data this) pos-char)
           ^JTextComponent text-area (:text-area @(.data this))
           initial-caret-position (.getCaretPosition text-area)]
@@ -76,7 +76,7 @@
     ;; Update the logoot document
     (let [helper-fn (var-get 
                       (find-var 
-                        'crdt-edit.gui.logoot-swing-document-helper/remove-deleted-characters))]
+                        'crdt-edit.gui.logoot-swing-document-helper/handle-remove))]
       (helper-fn (.data this) offs len))
     
     ;; Call bypassRemove to cause the GUI to update ETC 
@@ -93,7 +93,7 @@
     ;; Update the logoot document
     (let [helper-fn (var-get 
                       (find-var 
-                        'crdt-edit.gui.logoot-swing-document-helper/remove-position))
+                        'crdt-edit.gui.logoot-swing-document-helper/handle-remove-position))
           offset (helper-fn (.data this) position)
           ^JTextComponent text-area (:text-area @(.data this))
           initial-caret-position (.getCaretPosition text-area)]

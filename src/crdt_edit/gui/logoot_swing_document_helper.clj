@@ -3,32 +3,44 @@
   (:require [crdt-edit.logoot :as l]
             [clojure.core.async :as a :refer [go <! >!]]))
 
-(defn insert-typed-string
+(defn- insert-string-at-offset
+  "Inserts the string into the logoot document at the given offset. 
+  Returns the logoot-doc and a list of the positioned characters that were added."
+  ([site logoot-doc offset string]
+   (insert-string-at-offset site logoot-doc offset string []))
+  ([site logoot-doc offset string chars-added]
+   (if (empty? string)
+     [logoot-doc chars-added]
+     (let [new-pos (l/new-position-at-index site logoot-doc offset)
+           pos-char (l/->PositionedCharacter (first string) new-pos)]
+       (recur site
+              (l/insert logoot-doc pos-char) 
+              (inc offset) 
+              (rest string) 
+              (conj chars-added pos-char))))))
+
+(defn handle-insert-string
   "Handles inserting a string on the GUI as typed in by a user."
   [gui-atom offset string]
-  
-  (when (> (count string) 1)
-    (throw (Exception. "TODO implement support for strings longer than 1 character")))
   
   (let [gui-data (swap! 
                    gui-atom 
                    (fn [{:keys [logoot-doc site] :as gui-data}]
-                     (let [new-pos (l/new-position-at-index site logoot-doc offset)
-                           
-                           ;; TODO assumes string is only a single characters
-                           pos-char (l/->PositionedCharacter (first string) new-pos)
-                           logoot-doc (l/insert logoot-doc pos-char)]
+                     (let [[logoot-doc chars-added] 
+                           (insert-string-at-offset site logoot-doc offset string)]
                        (assoc gui-data 
                               :logoot-doc logoot-doc
-                              :last-insert pos-char))))
-        {:keys [outgoing last-insert]} gui-data]
+                              :last-inserts chars-added))))
+        {:keys [outgoing last-inserts]} gui-data]
     
     ;; Write the last inserted character to the outgoing changes
-    (go (>! outgoing {:type :insert
-                      :positioned-character last-insert})))
+    (go 
+      (doseq [inserted last-inserts]
+        (>! outgoing {:type :insert
+                      :positioned-character inserted}))))
   nil)
 
-(defn insert-positioned-character
+(defn handle-insert-positioned-character
   "Handles inserting a positioned character. Returns a tuple of the offset and the string to insert 
   in the text area."
   [gui-atom pos-char]
@@ -42,29 +54,42 @@
     [(l/position->index updated-doc (:position pos-char))
      (str (:character pos-char))]))
 
-(defn remove-deleted-characters
+(defn- remove-at-offset
+  "Removes the characters at the document at the given offset and length.
+  Returns the updated logoot document and the positions removed"
+  ([logoot-doc offset length]
+   (remove-at-offset logoot-doc offset length []))
+  ([logoot-doc offset length positions-removed]
+   (if (= length 0)
+     [logoot-doc positions-removed]
+     (let [position (l/index->position logoot-doc offset)]
+       (recur (l/delete logoot-doc position)
+              offset
+              (dec length)
+              (conj positions-removed position))))))
+
+(defn handle-remove
   "Handles delete characters removed by typing delete/backspace in the text area."
   [gui-atom offset length]
   
-  (when (> length 1)
-    (throw (Exception. "TODO implement support for deleting more than a single character")))
-  
   (let [gui-data (swap! 
                    gui-atom 
-                   (fn [{:keys [logoot-doc site] :as gui-data}]
-                     (let [position (l/index->position logoot-doc offset)
-                           logoot-doc (l/delete logoot-doc position)]
+                   (fn [{:keys [logoot-doc] :as gui-data}]
+                     (let [[logoot-doc positions-removed]
+                           (remove-at-offset logoot-doc offset length)]
                        (assoc gui-data 
                               :logoot-doc logoot-doc
-                              :last-remove position))))
-        {:keys [outgoing last-remove]} gui-data]
+                              :last-removes positions-removed))))
+        {:keys [outgoing last-removes]} gui-data]
     
     ;; Write the last inserted character to the outgoing changes
-    (go (>! outgoing {:type :remove
-                      :position last-remove})))
+    (go 
+      (doseq [position last-removes]
+        (>! outgoing {:type :remove
+                      :position position}))))
   nil)
 
-(defn remove-position
+(defn handle-remove-position
   "Handles delete characters received from incoming. Returns the offset of the character that was 
   removed."
   [gui-atom position]

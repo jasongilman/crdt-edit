@@ -14,8 +14,6 @@
         {:keys [logoot-swing-doc frame]} (frame/create site logoot-doc outgoing)]
     
     {;; TODO
-     :site site
-     ;; TODO
      :server (api/create-server port)
      ;; TODO
      :logoot-swing-doc logoot-swing-doc
@@ -49,8 +47,6 @@
   [system]
   (let [{:keys [frame
                 running-flag]} system]
-    ;; TODO start the server
-    
     ;; Set the running flag to true. Must be done before control go blocks start.
     (reset! running-flag true)
     
@@ -71,8 +67,6 @@
   
   (let [{:keys [frame
                 running-flag]} system]
-    ;; TODO stop the server
-    
     ;; Stop processing changes on the channels
     (reset! running-flag false)
     

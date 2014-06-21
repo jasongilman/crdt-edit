@@ -3,7 +3,6 @@
   (:require [crdt-edit.logoot :as l]
             [clojure.core.async :as a :refer [go <! >!]]))
 
-
 (defn insert-typed-string
   "Handles inserting a string on the GUI as typed in by a user."
   [gui-atom offset string]
@@ -25,8 +24,8 @@
         {:keys [outgoing last-insert]} gui-data]
     
     ;; Write the last inserted character to the outgoing changes
-    (go (>! outgoing {:positioned-character last-insert})))
-  
+    (go (>! outgoing {:type :insert
+                      :positioned-character last-insert})))
   nil)
 
 (defn insert-positioned-character
@@ -43,3 +42,38 @@
     [(l/position->index updated-doc (:position pos-char))
      (str (:character pos-char))]))
 
+(defn remove-deleted-characters
+  "Handles delete characters removed by typing delete/backspace in the text area."
+  [gui-atom offset length]
+  
+  (when (> length 1)
+    (throw (Exception. "TODO implement support for deleting more than a single character")))
+  
+  (let [gui-data (swap! 
+                   gui-atom 
+                   (fn [{:keys [logoot-doc site] :as gui-data}]
+                     (let [position (l/index->position logoot-doc offset)
+                           logoot-doc (l/delete logoot-doc position)]
+                       (assoc gui-data 
+                              :logoot-doc logoot-doc
+                              :last-remove position))))
+        {:keys [outgoing last-remove]} gui-data]
+    
+    ;; Write the last inserted character to the outgoing changes
+    (go (>! outgoing {:type :remove
+                      :position last-remove})))
+  nil)
+
+(defn remove-position
+  "Handles delete characters received from incoming. Returns the offset of the character that was 
+  removed."
+  [gui-atom position]
+  (let [gui-data (swap! 
+                   gui-atom 
+                   (fn [{:keys [logoot-doc] :as gui-data}]
+                     (let [pos-index (l/position->index logoot-doc position)
+                           logoot-doc (l/delete logoot-doc position)]
+                       (assoc gui-data 
+                              :logoot-doc logoot-doc
+                              :last-remove pos-index))))]
+    (:last-remove gui-data)))

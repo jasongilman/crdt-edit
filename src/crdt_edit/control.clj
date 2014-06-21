@@ -8,17 +8,31 @@
            crdt_edit.logoot.Position
            crdt_edit.logoot.PositionedCharacter))
 
+(defmulti process-update
+  "Processes an update by type"
+  (fn [logoot-swing-doc update]
+    (:type update)))
+
+(defmethod process-update :insert
+  [logoot-swing-doc {:keys [positioned-character]}]
+  (.insertPositionedCharacter logoot-swing-doc positioned-character))
+
+(defmethod process-update :remove
+  [logoot-swing-doc {:keys [position]}]
+  (.removePosition logoot-swing-doc position))
+
 (defn process-incoming
   "Takes incoming logoot document changes and applies it to the swing document"
   [system]
   (let [{:keys [running-flag ^LogootSwingDocument logoot-swing-doc incoming]} system]
     (go
       (while @running-flag
-        (let [update (<! incoming)
-              ;; only works for insert updates
-              {:keys [positioned-character]} update]
-          (println "Read updated change:" (pr-str positioned-character))
-          (.insertPositionedCharacter logoot-swing-doc positioned-character))))))
+        (try 
+          (let [update (<! incoming)]
+            (println "Read updated change:" update)
+            (process-update logoot-swing-doc update))
+          (catch Exception e
+            (.printStackTrace e)))))))
 
 ;; Add methods to records to allow them to be printed to edn
 
@@ -42,7 +56,6 @@
     (go
       (while @running-flag
         (let [update (<! outgoing)
-              ;; only works for insert updates
               edn (pr-str update)]
           (println "Sending outgoing update:" edn)
           (doseq [collaborator collaborators]

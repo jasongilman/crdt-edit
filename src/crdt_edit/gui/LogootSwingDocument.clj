@@ -9,7 +9,8 @@
                                 remove bypassRemove
                                 writeLock writeLockSuper
                                 writeUnlock writeUnlockSuper}
-              :methods [[insertPositionedCharacter [Object] void]]
+              :methods [[insertPositionedCharacter [Object] void]
+                        [removePosition [Object] void]]
               :init init
               :state data)
   (:import javax.swing.text.JTextComponent))
@@ -44,6 +45,7 @@
       (.writeUnlockSuper this))))
 
 (defn- -insertPositionedCharacter
+  "Inserts a logoot positioned character."
   [this pos-char]
   (.writeLockSuper this)
   (try 
@@ -57,7 +59,7 @@
       
       ;; Call bypassInsertString to cause the GUI to update ETC 
       (.bypassInsertString this offset string nil)
-
+      
       ;; Calling insert string on the document doesn't update the caret position so we have do it 
       ;; manually      
       (when (<= offset initial-caret-position)
@@ -68,22 +70,41 @@
 (defn- -remove 
   "Overrides remove on the super class."
   [this offs len]
-  (println "Attempting to remove" len "characters at position" offs)
-  ;; TODO handle removes. 
-  ;; Get the position at the index
-  ;; Call delete with it.
+  (.writeLockSuper this)
   
-  )
+  (try 
+    ;; Update the logoot document
+    (let [helper-fn (var-get 
+                      (find-var 
+                        'crdt-edit.gui.logoot-swing-document-helper/remove-deleted-characters))]
+      (helper-fn (.data this) offs len))
+    
+    ;; Call bypassRemove to cause the GUI to update ETC 
+    (.bypassRemove this offs len)
+    
+    (finally 
+      (.writeUnlockSuper this))))
 
-(comment 
-  
-  (def d (LogootDocument. 5))
-  (.insertString d 0 "foo" nil)
-  (.bypassInsertString d 0 "foo" nil)
-  
-  (.remove d 3 1)
-  (.bypassRemove d 0 1)
-  
-  (.getText d 0 (.getLength d))
-  
-  )
+(defn- -removePosition
+  "Removes a character with the logoot position."
+  [this position]
+  (.writeLockSuper this)
+  (try 
+    ;; Update the logoot document
+    (let [helper-fn (var-get 
+                      (find-var 
+                        'crdt-edit.gui.logoot-swing-document-helper/remove-position))
+          offset (helper-fn (.data this) position)
+          ^JTextComponent text-area (:text-area @(.data this))
+          initial-caret-position (.getCaretPosition text-area)]
+      
+      ;; Call bypassRemove to cause the GUI to update ETC 
+      (.bypassRemove this offset 1)
+      
+      ;; Calling remove  on the document doesn't update the caret position so we have do it 
+      ;; manually      
+      (when (and (> initial-caret-position 0) (<= offset initial-caret-position))
+        (.setCaretPosition text-area (dec initial-caret-position))))
+    (finally 
+      (.writeUnlockSuper this))))
+

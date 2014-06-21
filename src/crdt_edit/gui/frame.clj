@@ -17,15 +17,15 @@
     (.setDocument text-area document)
     
     {:logoot-swing-doc document
-     :frame  (sw/frame :title "CRDT Edit",
+     :frame  (sw/frame :title (str "CRDT Edit for site " site),
                        :content (sw/scrollable text-area)
+                       :size [400 :by 200]
                        :on-close :dispose)}))
 
 (defn display
   [frame]
   (sw/invoke-later
     (-> frame
-        sw/pack!
         sw/show!)))
 
 (defn close

@@ -11,9 +11,8 @@
   (let [{:keys [incoming]} system]
     (routes
       (POST "/updates" {body :body}
-            (let [update (tag/read-string (slurp body))]
-              (println "Received" (pr-str update))
-              (go (>! incoming update))
+            (let [updates (tag/read-string (slurp body))]
+              (go (>! incoming updates))
               {:status 200 :body ""}))
       (route/not-found "Not Found"))))
 

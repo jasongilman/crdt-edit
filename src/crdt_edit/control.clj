@@ -28,9 +28,9 @@
     (go
       (while @running-flag
         (try 
-          (let [update (<! incoming)]
-            (println "Read updated change:" update)
-            (process-update logoot-swing-doc update))
+          (let [updates (<! incoming)]
+            (doseq [update updates]
+              (process-update logoot-swing-doc update)))
           (catch Exception e
             (.printStackTrace e)))))))
 
@@ -55,9 +55,8 @@
   (let [{:keys [running-flag outgoing collaborators]} system]
     (go
       (while @running-flag
-        (let [update (<! outgoing)
-              edn (pr-str update)]
-          (println "Sending outgoing update:" edn)
+        (let [updates (<! outgoing)
+              edn (pr-str updates)]
           (doseq [collaborator collaborators]
             (let [url (format "http://%s/updates" collaborator)]
               (client/post url

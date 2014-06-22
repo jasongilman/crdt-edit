@@ -35,9 +35,9 @@
     
     ;; Write the last inserted character to the outgoing changes
     (go 
-      (doseq [inserted last-inserts]
-        (>! outgoing {:type :insert
-                      :positioned-character inserted}))))
+      (>! outgoing (map #(hash-map :type :insert
+                                   :positioned-character %)
+                        last-inserts))))
   nil)
 
 (defn handle-insert-positioned-character
@@ -84,9 +84,9 @@
     
     ;; Write the last inserted character to the outgoing changes
     (go 
-      (doseq [position last-removes]
-        (>! outgoing {:type :remove
-                      :position position}))))
+      (>! outgoing (map #(hash-map :type :remove
+                                   :position %)
+                        last-removes))))
   nil)
 
 (defn handle-remove-position

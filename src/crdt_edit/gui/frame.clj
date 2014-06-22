@@ -27,6 +27,11 @@
         document (LogootSwingDocument. site logoot-doc outgoing text-area)]
     (.setDocument text-area document)
     
+    ;; Automatically update the collaborators text area when the collaborators change.
+    (add-watch collaborators-atom :collaborators
+               (fn [_ _ _ collaborators]
+                 (sw/text! collaborators-text-area (str/join ", " collaborators))))
+    
     
     {:logoot-swing-doc document
      :frame  (sw/frame :title (format "CRDT Edit %s:%d for site %s" 

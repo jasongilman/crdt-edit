@@ -132,6 +132,9 @@
   (and (< (compare site1 site2) 0)
        (< (compare site2 site3) 0)))
 
+;; TODO a problem not accounted for in the intermediate functions below is if the position is already 
+;; at Integer/MAX_VALUE or 1 below it or 
+
 (defn- intermediate-of-id-pair
   "Finds the intermediate id between the two ids if possible. Returns nil if not."
   [site id1 id2 random-mid]

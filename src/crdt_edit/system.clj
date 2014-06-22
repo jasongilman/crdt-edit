@@ -3,7 +3,8 @@
             [crdt-edit.logoot :as logoot]
             [crdt-edit.control :as control]
             [clojure.core.async :as async]
-            [crdt-edit.api.routes :as api]))
+            [crdt-edit.api.routes :as api]
+            [crdt-edit.discovery :as discovery]))
 
 (defn create
   "Creates an initial system"
@@ -15,11 +16,15 @@
         {:keys [logoot-swing-doc frame]} (frame/create site port logoot-doc outgoing collaborators-atom)]
     
     {;; The web server that accepts updates.
+     :port port
      :server (api/create-server port)
+     
      ;; The java.swing.text.Document that handles typing updates
      :logoot-swing-doc logoot-swing-doc
+     
      ;; The swing frame containing the GUI displayed to the user.
      :frame frame
+     
      ;; Core.async channel of incoming changes from other collaborators.
      :incoming incoming
      ;; Core.async channel of changes to send to other collaborators.
@@ -27,6 +32,9 @@
      
      ;; List of host names of collaborating editors
      :collaborators collaborators-atom
+     
+     ;; Allows discovery of other running editors
+     :discovery (discovery/create)
      
      ;; Running flag is used to signal go blocks that we are done.
      :running-flag (atom false)}))
@@ -60,7 +68,9 @@
     ;; Display the GUI
     (frame/display frame)
     
-    (update-in system [:server] api/start-server system)))
+    (-> system
+        (update-in [:server] api/start-server system)
+        (update-in [:discovery] discovery/start system))))
 
 (defn stop
   "Stops the system and returns it"
@@ -74,6 +84,8 @@
     ;; Hide the gui
     (frame/close frame)
     
-    (update-in system [:server] api/stop-server system)))
+    (-> system
+        (update-in [:server] api/stop-server system)
+        (update-in [:discovery] discovery/stop system))))
 
 

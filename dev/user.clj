@@ -18,8 +18,8 @@
 (defn start []
   (let [create-fn (get-var 'crdt-edit.system/create)
         start-fn (get-var 'crdt-edit.system/start)
-        system-a (create-fn :a ["localhost:3001"] 3000)
-        system-b (create-fn :b ["localhost:3000"] 3001)]
+        system-a (create-fn :a #{} 3000)
+        system-b (create-fn :b #{} 3001)]
     (alter-var-root #'system-a
                     (constantly (start-fn system-a)))
     (alter-var-root #'system-b
@@ -41,6 +41,7 @@
 (defn reset
   []
   ;; Due to an unfortunate compilation issue I don't have time to diagnose I have to require this here.
+  ;; TODO this is causing other issues if something fails to reload
   (require 'crdt-edit.system)
   
   (stop)

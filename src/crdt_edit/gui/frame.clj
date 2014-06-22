@@ -15,7 +15,7 @@
 (defn create
   "Creates an instance of the GUI. Returns a map of the swing document
   and the frame."
-  [site logoot-doc outgoing collaborators-atom]
+  [site port logoot-doc outgoing collaborators-atom]
   
   (let [collaborators-text-area (sw/text :text (str/join ", " @collaborators-atom)
                                          :editable? true)
@@ -29,7 +29,8 @@
     
     
     {:logoot-swing-doc document
-     :frame  (sw/frame :title (str "CRDT Edit " (InetAddress/getLocalHost) " for site " site),
+     :frame  (sw/frame :title (format "CRDT Edit %s:%d for site %s" 
+                                      (.getHostAddress (InetAddress/getLocalHost)) port site)
                        :content (sw/top-bottom-split 
                                   (sw/horizontal-panel
                                     :items ["Collaborators (comma separated)" 
@@ -37,8 +38,8 @@
                                             (sw/button :text "Update"
                                                     :listen [:action (fn [& args] (update-collborators (sw/text collaborators-text-area)
                                                                                                        collaborators-atom))])]) 
-                                  (sw/vertical-panel :items [(sw/scrollable text-area) ]))
-                       :minimum-size [640 :by 480]
+                                  (sw/scrollable text-area))
+                       :minimum-size [440 :by 380]
                        :on-close :dispose)}))
 
 (defn display

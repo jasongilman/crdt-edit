@@ -12,7 +12,7 @@
         incoming (async/chan 5)
         logoot-doc (logoot/create)
         collaborators-atom (atom collaborators)
-        {:keys [logoot-swing-doc frame]} (frame/create site logoot-doc outgoing collaborators-atom)]
+        {:keys [logoot-swing-doc frame]} (frame/create site port logoot-doc outgoing collaborators-atom)]
     
     {;; The web server that accepts updates.
      :server (api/create-server port)

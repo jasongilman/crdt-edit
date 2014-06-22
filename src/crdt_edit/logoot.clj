@@ -21,6 +21,7 @@
 (defrecord PositionIdentifier
   [
    ;; Integer identifying a position
+   ;; TODO consider renaming to pos-id
    pos
    ;; A symbol identifying the site
    site

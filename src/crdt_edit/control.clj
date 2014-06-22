@@ -57,7 +57,7 @@
       (while @running-flag
         (let [updates (<! outgoing)
               edn (pr-str updates)]
-          (doseq [collaborator collaborators]
+          (doseq [collaborator @collaborators]
             (let [url (format "http://%s/updates" collaborator)]
               (client/post url
                 {:headers {:content-type "application/edn"}

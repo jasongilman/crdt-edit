@@ -11,7 +11,8 @@
   (let [outgoing (async/chan 10)
         incoming (async/chan 5)
         logoot-doc (logoot/create)
-        {:keys [logoot-swing-doc frame]} (frame/create site logoot-doc outgoing)]
+        collaborators-atom (atom collaborators)
+        {:keys [logoot-swing-doc frame]} (frame/create site logoot-doc outgoing collaborators-atom)]
     
     {;; TODO
      :server (api/create-server port)
@@ -25,7 +26,7 @@
      :outgoing outgoing
      
      ;; List of host names of collaborating editors
-     :collaborators collaborators
+     :collaborators collaborators-atom
      
      ;; Running flag is used to signal go blocks that we are done.
      :running-flag (atom false)}))

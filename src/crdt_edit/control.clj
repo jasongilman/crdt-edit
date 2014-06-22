@@ -1,5 +1,6 @@
 (ns crdt-edit.control
   (:require [clojure.core.async :as a :refer [go go-loop <! >!]]
+            [crdt-edit.gui.LogootSwingDocument]
             [crdt-edit.logoot :as l]
             [clj-http.client :as client]
             [miner.tagged :as tag])

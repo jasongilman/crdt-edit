@@ -17,7 +17,8 @@ An experimental collaborative text editor built on CRDTs. This was built using t
   * Run it
     * `java -jar target/crdt-edit-0.1.0-SNAPSHOT-standalone.jar --port 3000 --site alpha`
   * Enter the hostname and port of another collaborator on the local network or you can start up an additional instance for testing on a different port.
-  * 
+  
+
 ## TODOs
 
   * Nice To haves

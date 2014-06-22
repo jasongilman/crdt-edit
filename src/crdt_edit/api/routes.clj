@@ -8,12 +8,17 @@
 
 (defn define-routes
   [system]
-  (let [{:keys [incoming]} system]
+  (let [{:keys [incoming collaborators]} system]
     (routes
       (POST "/updates" {body :body}
             (let [updates (tag/read-string (slurp body))]
               (go (>! incoming updates))
               {:status 200 :body ""}))
+      (context 
+        "/collaborators/:id" [collaborator]
+        (POST "/" []
+          (println "Adding collaborator via API" collaborator)
+          (swap! collaborators conj collaborator)))
       (route/not-found "Not Found"))))
 
 (defn make-api

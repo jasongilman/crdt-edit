@@ -22,17 +22,19 @@
         system-b (create-fn :b #{} 3001)]
     (alter-var-root #'system-a
                     (constantly (start-fn system-a)))
-    (alter-var-root #'system-b
-                    (constantly (start-fn system-b)))))
+    #_(alter-var-root #'system-b
+                    (constantly (start-fn system-b)))
+    ))
 
 (defn stop []
   (let [stop-fn (get-var 'crdt-edit.system/stop)]
     (alter-var-root #'system-a (constantly 
                                  (when system-a 
                                    (stop-fn system-a))))
-    (alter-var-root #'system-b (constantly 
+    #_(alter-var-root #'system-b (constantly 
                                  (when system-b 
-                                   (stop-fn system-b))))))
+                                   (stop-fn system-b)))
+                    )))
 
 (defn print-logoot-doc
   []

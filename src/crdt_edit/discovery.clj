@@ -1,5 +1,7 @@
 (ns crdt-edit.discovery
   "Allows discovery of other editors. Uses the JmDNS library for service registry and discovery."
+  (:require [clojure.set :as set]
+            [clj-http.client :as client])
   (:import [javax.jmdns 
             JmDNS
             ServiceInfo
@@ -17,10 +19,10 @@
 (defn- create-service-info
   "TODO"
   [system]
-  (javax.jmdns.ServiceInfo/create service-type
-                                  "Collaborative Editor"
-                                  (:port system)
-                                  "Collaboratively edit"))
+  (ServiceInfo/create service-type
+                      "Collaborative Editor"
+                      (:port system)
+                      "Collaboratively edit"))
 (defn- get-current-host
   "TODO"
   []
@@ -30,12 +32,13 @@
   "TODO"
   [event collaborators-atom current-port]
   (try 
-   (let [[ip port] (service-event->ip-and-port event)]
-      (when-not (and (= (get-current-host) ip)
-                     (= port current-port))
+    (let [[ip port] (service-event->ip-and-port event)]
+      (if (and (= (get-current-host) ip)
+               (= port current-port))
+        (println "Ignoring service running on" ip port)
         (swap! collaborators-atom conj (str ip ":" port))))
-   (catch Exception e
-     (.printStackTrace e))))
+    (catch Exception e
+      (.printStackTrace e))))
 
 (defn- create-service-listener
   "TODO"
@@ -44,7 +47,7 @@
     (reify ServiceListener
       (serviceAdded 
         [this event]
-        (println "Service added")
+        (println "Service added" event)
         )
       (serviceRemoved
         [this event]
@@ -66,6 +69,18 @@
   "Starts listening for other collaborators on the network. When they are
   found they will be added to the list of collaborators."
   [discovery-info system]
+  
+  ;; Add a watch on the collaborators Atom. When it's updated we should tell the other
+  ;; collaborator manually
+  
+  (add-watch (:collaborators system) :collaborators 
+             (fn [_ _ prev-collaborators new-collaborators]
+               (let [changed-collabs (set/difference new-collaborators prev-collaborators)
+                     me (str (get-current-host) "%3A" (:port system))]
+                 (doseq [collaborator changed-collabs]
+                   (println "Adding myself as a collaborator to" collaborator)
+                   (let [url (format "http://%s/collaborators/%s" collaborator me)]
+                     (client/post url))))))
   
   (let [jmdns (:jmdns discovery-info)
         service-listener (create-service-listener system)

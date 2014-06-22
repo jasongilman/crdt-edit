@@ -14,11 +14,9 @@
             (let [updates (tag/read-string (slurp body))]
               (go (>! incoming updates))
               {:status 200 :body ""}))
-      (context 
-        "/collaborators/:collaborator" [collaborator]
-        (POST "/" []
-          (println "Adding collaborator via API" collaborator)
-          (swap! collaborators conj collaborator)))
+      (POST "/collaborators" {collaborator :body}
+            (println "Adding collaborator via API" collaborator)
+            (swap! collaborators conj collaborator))
       (route/not-found "Not Found"))))
 
 (defn make-api

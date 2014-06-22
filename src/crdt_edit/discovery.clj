@@ -79,8 +79,8 @@
                      me (str (get-current-host) "%3A" (:port system))]
                  (doseq [collaborator changed-collabs]
                    (println "Adding myself as a collaborator to" collaborator)
-                   (let [url (format "http://%s/collaborators/%s" collaborator me)]
-                     (client/post url))))))
+                   (let [url (format "http://%s/collaborators/" collaborator)]
+                     (client/post url {:body collaborator}))))))
   
   (let [jmdns (:jmdns discovery-info)
         service-listener (create-service-listener system)

@@ -15,7 +15,7 @@
               (go (>! incoming updates))
               {:status 200 :body ""}))
       (context 
-        "/collaborators/:id" [collaborator]
+        "/collaborators/:collaborator" [collaborator]
         (POST "/" []
           (println "Adding collaborator via API" collaborator)
           (swap! collaborators conj collaborator)))

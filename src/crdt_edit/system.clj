@@ -14,15 +14,15 @@
         collaborators-atom (atom collaborators)
         {:keys [logoot-swing-doc frame]} (frame/create site logoot-doc outgoing collaborators-atom)]
     
-    {;; TODO
+    {;; The web server that accepts updates.
      :server (api/create-server port)
-     ;; TODO
+     ;; The java.swing.text.Document that handles typing updates
      :logoot-swing-doc logoot-swing-doc
-     ;; TODO
+     ;; The swing frame containing the GUI displayed to the user.
      :frame frame
-     ;; TODO
+     ;; Core.async channel of incoming changes from other collaborators.
      :incoming incoming
-     ;; TODO
+     ;; Core.async channel of changes to send to other collaborators.
      :outgoing outgoing
      
      ;; List of host names of collaborating editors
@@ -75,3 +75,5 @@
     (frame/close frame)
     
     (update-in system [:server] api/stop-server system)))
+
+

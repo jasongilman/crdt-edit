@@ -1,5 +1,5 @@
 (ns crdt-edit.logoot
-  "An implementation of the Logoot CRDT."
+  "An implementation of the Logoot CRDT. See http://hal.archives-ouvertes.fr/docs/00/34/59/11/PDF/main.pdf"
   (:require [clojure.string :as str]))
 
 (defn- lexi-compare
@@ -12,17 +12,16 @@
       (compare (count v1) (count v2))))
 
 (defprotocol ToLogootString
-  "TODO"
+  "Converts a logoot structure into a string for human readability of the logoot structure as shown
+  in the Logoot paper."
   (to-logoot-string
-    [i]
-    "TODO"))
+    [i]))
 
-;; TODO document this
+;; Represents portion of a position. Contains a number and the site which created this identifier.
 (defrecord PositionIdentifier
   [
    ;; Integer identifying a position
-   ;; TODO consider renaming to pos-id
-   pos
+   pos-id
    ;; A symbol identifying the site
    site
    ]
@@ -31,11 +30,11 @@
   
   (compareTo 
     [pid1 pid2]
-    (let [{pos1 :pos site1 :site} pid1
-          {pos2 :pos site2 :site} pid2]
+    (let [{pos-id1 :pos-id site1 :site} pid1
+          {pos-id2 :pos-id site2 :site} pid2]
       (cond 
-        (< pos1 pos2) -1
-        (> pos1 pos2) 1
+        (< pos-id1 pos-id2) -1
+        (> pos-id1 pos-id2) 1
         :else 
         (compare site1 site2))))
   
@@ -43,9 +42,9 @@
   
   (to-logoot-string
     [pid]
-    (str "<" (:pos pid) "," (:site pid) ">")))
+    (str "<" (:pos-id pid) "," (:site pid) ">")))
 
-;; TODO document this
+;; Represents a position in a logoot document. 
 (defrecord Position
   [
    ;; A list of position identifiers
@@ -65,7 +64,7 @@
     [pc]
     (str/join "." (map to-logoot-string identifiers))))
 
-;; TODO document this
+;; Represents a single character positioned withing a logoot document.
 (defrecord PositionedCharacter
   [
    ;; A single character with a position in the document.
@@ -96,32 +95,13 @@
   [pos site]
   (->PositionIdentifier pos site))
 
-;; TODO not sure that position and pos-char are really helpful
-(defn position
-  "Creates a new position at the same site"
-  [site & ids]
-  (->Position (mapv #(pos-id % site) ids)))
-
-(defn pos-char
-  "Creates a new positioned character"
-  [c site & ids]
-  (->PositionedCharacter
-    c
-    (apply position site ids)))
-
 (def DOCUMENT_BEGINNING
   "Special positioned character representing the beginning of the document"
-  (pos-char \B :begin 0))
+  (->PositionedCharacter \B (->Position [(->PositionIdentifier 0 :begin)])))
 
 (def DOCUMENT_END
   "Special positioned character representing the end of the document"
-  (pos-char \E :end Integer/MAX_VALUE))
-
-
-;; TODO performance note: If writing a function that applies many updates to a document use transients
-
-;; TODO we may want to refactor this and use a sorted-map instead of a sorted set. The keys would be
-;; positions and the values would be characters. 
+  (->PositionedCharacter \E (->Position [(->PositionIdentifier Integer/MAX_VALUE :begin)])))
 
 (defn create
   "Returns a new empty data structure"
@@ -153,44 +133,43 @@
        (< (compare site2 site3) 0)))
 
 (defn- intermediate-of-id-pair
-  "TODO
-  Finds the intermediate id between the two ids if possible. Returns nil if not."
+  "Finds the intermediate id between the two ids if possible. Returns nil if not."
   [site id1 id2 random-mid]
-  (let [{^long pos1 :pos site1 :site} id1
-        {^long pos2 :pos site2 :site} id2]
+  (let [{^long pos-id1 :pos-id site1 :site} id1
+        {^long pos-id2 :pos-id site2 :site} id2]
     
     (cond 
-      (= pos1 pos2)
+      (= pos-id1 pos-id2)
       (when (sites-ordered? site1 site site2)
         ;; The site naturally fits between the two sites
-        (pos-id pos1 site))
+        (pos-id pos-id1 site))
       
-      (> pos1 pos2)
-      ;; pos1 is greater than pos2 which must mean that the previous ids were separated
+      (> pos-id1 pos-id2)
+      ;; pos-id1 is greater than pos-id2 which must mean that the previous ids were separated
       ;; by only 1. 
-      (pos-id (random-mid pos1 Integer/MAX_VALUE) site)
+      (pos-id (random-mid pos-id1 Integer/MAX_VALUE) site)
       
       
       ;; Separated by 1
-      (= (- pos2 pos1) 1)
+      (= (- pos-id2 pos-id1) 1)
       (when (< (compare site1 site) 0)
         ;; The site naturally comes after the first ids site
-        (pos-id pos1 site))
+        (pos-id pos-id1 site))
       
       ;; separated by more than one
       :else  
-      (pos-id (random-mid pos1 pos2) site))))
+      (pos-id (random-mid pos-id1 pos-id2) site))))
 
 
 (defn intermediate-position
   "Creates an intermediate position between pos1 and pos2. Site is the site of the current agent. 
   Also allows for the random function to be specified that chooses a value between two other values"
-  ([site pos1 pos2]
+  ([site pos-id1 pos-id2]
    (intermediate-position 
-     site pos1 pos2 random-between))
-  ([site pos1 pos2 random-mid]
-   (let [ids1 (:identifiers pos1)
-         ids2 (:identifiers pos2)
+     site pos-id1 pos-id2 random-between))
+  ([site pos-id1 pos-id2 random-mid]
+   (let [ids1 (:identifiers pos-id1)
+         ids2 (:identifiers pos-id2)
          possible-pairs (map vector ids1 ids2)]
      (loop [pairs-left possible-pairs
             intermediate-ids []]
@@ -200,12 +179,12 @@
            (conj intermediate-ids 
                  (cond 
                    (< (count ids1) (count ids2))
-                   (let [pos-to-use (:pos (nth ids2 (count ids1)))]
+                   (let [pos-to-use (:pos-id (nth ids2 (count ids1)))]
                      ;; When ids2 has more than ids1 we have to find a position before that last ids2
                      (pos-id (random-mid Integer/MIN_VALUE pos-to-use) site))
                    
                    (> (count ids1) (count ids2))
-                   (let [pos-to-use (:pos (nth ids1 (count ids2)))]
+                   (let [pos-to-use (:pos-id (nth ids1 (count ids2)))]
                      ;; When ids1 has more than ids2 we have to find a position after that last ids1
                      (pos-id (random-mid pos-to-use Integer/MAX_VALUE) site))
                    
@@ -251,12 +230,12 @@
     (intermediate-position site before-pos after-pos)))
 
 (defn insert
-  "TODO document"
+  "Inserts a positioned character into the logoot document"
   [document pc]
   (conj document pc))
 
 (defn delete
-  "TODO document"
+  "Removes a character from the document at the given position."
   [document position]
   (disj document (->PositionedCharacter nil position)))
 

@@ -45,7 +45,7 @@
                                                                                                        collaborators-atom))])]) 
                                   (sw/scrollable text-area))
                        :minimum-size [440 :by 380]
-                       :on-close :dispose)}))
+                       :on-close :exit)}))
 
 (defn display
   [frame]

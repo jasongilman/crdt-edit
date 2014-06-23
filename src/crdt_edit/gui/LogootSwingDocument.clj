@@ -98,13 +98,14 @@
           ^JTextComponent text-area (:text-area @(.data this))
           initial-caret-position (.getCaretPosition text-area)]
       
-      ;; Call bypassRemove to cause the GUI to update ETC 
-      (.bypassRemove this offset 1)
-      
-      ;; Calling remove  on the document doesn't update the caret position so we have do it 
-      ;; manually      
-      (when (and (> initial-caret-position 0) (<= offset initial-caret-position))
-        (.setCaretPosition text-area (dec initial-caret-position))))
+      (when offset
+        ;; Call bypassRemove to cause the GUI to update ETC 
+        (.bypassRemove this offset 1)
+        
+        ;; Calling remove  on the document doesn't update the caret position so we have do it 
+        ;; manually      
+        (when (and (> initial-caret-position 0) (<= offset initial-caret-position))
+          (.setCaretPosition text-area (dec initial-caret-position)))))
     (finally 
       (.writeUnlockSuper this))))
 

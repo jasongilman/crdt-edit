@@ -19,8 +19,8 @@
   (require 'crdt-edit.system)
   (let [create-fn (get-var 'crdt-edit.system/create)
         start-fn (get-var 'crdt-edit.system/start)
-        system-a (create-fn :a 3000)
-        system-b (create-fn :b 3001)]
+        system-a (create-fn :a 3000 nil)
+        system-b (create-fn :b 3001 nil)]
     (alter-var-root #'system-a
                     (constantly (start-fn system-a)))
     (alter-var-root #'system-b

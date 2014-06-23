@@ -11,6 +11,8 @@
     :default 3000
     :parse-fn #(Integer/parseInt %)
     :validate [#(< 0 % 0x10000) "Must be a number between 0 and 65536"]]
+   ["-i" "--ip-address IP" "Current IP Address"
+    :id :ip-address]
    ["-s" "--site SITE" "Site"
     :id :site
     :default (keyword (.getHostAddress (InetAddress/getLocalHost)))
@@ -20,6 +22,6 @@
 
 (defn -main
   [& args]
-  (let [{{:keys [port site]} :options} (cli/parse-opts args cli-options)
-        system (system/start (system/create site port))]
+  (let [{{:keys [port site ip-address]} :options} (cli/parse-opts args cli-options)
+        system (system/start (system/create site port ip-address))]
     (println "Running...")))

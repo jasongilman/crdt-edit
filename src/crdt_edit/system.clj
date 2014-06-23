@@ -9,11 +9,11 @@
 
 (defn create
   "Creates an initial system"
-  [site port]
+  [site port ip-address]
   (let [outgoing (async/chan 10)
         incoming (async/chan 5)
         logoot-doc (logoot/create)
-        ip-address (.getHostAddress (InetAddress/getLocalHost))
+        ip-address (or ip-address (.getHostAddress (InetAddress/getLocalHost)))
         collaborators-atom (atom #{}
                                  ;; Don't allow self as a collaborator
                                  :validator #((complement %) (str ip-address ":" port)))

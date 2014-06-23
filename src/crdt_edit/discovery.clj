@@ -94,8 +94,9 @@
 (defn stop
   "Removes the listeners and the registered service"
   [discovery-info system]
-  (let [{:keys [jmdns service-listener registered-service]} discovery-info]
-    (.unregisterService jmdns registered-service)
-    (.removeServiceListener jmdns service-type service-listener)
-    (dissoc discovery-info :service-listener :registered-service)))
+  (when discovery-info
+    (let [{:keys [jmdns service-listener registered-service]} discovery-info]
+      (.unregisterService jmdns registered-service)
+      (.removeServiceListener jmdns service-type service-listener)
+      (dissoc discovery-info :service-listener :registered-service))))
 

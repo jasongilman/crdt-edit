@@ -3,6 +3,7 @@
             [crdt-edit.gui.LogootSwingDocument]
             [crdt-edit.logoot :as l]
             [clj-http.client :as client]
+            [clj-http.conn-mgr :as conn-mgr]
             [miner.tagged :as tag])
   (:import crdt_edit.gui.LogootSwingDocument
            crdt_edit.logoot.PositionIdentifier
@@ -53,7 +54,13 @@
 (defn process-outgoing
   "Takes incoming logoot document changes and applies it to the swing document"
   [system]
-  (let [{:keys [running-flag outgoing collaborators]} system]
+  (let [{:keys [running-flag outgoing collaborators]} system
+        ;; Determine the number of threads that Go blocks will use.
+        num-threads (-> (Runtime/getRuntime)
+                        (.availableProcessors)
+                        (* 2)
+                        (+ 42))
+        cm (clj-http.conn-mgr/make-reusable-conn-manager {:threads num-threads})]
     (go
       (while @running-flag
         (let [updates (<! outgoing)
@@ -62,4 +69,5 @@
             (let [url (format "http://%s/updates" collaborator)]
               (client/post url
                 {:headers {:content-type "application/edn"}
+                 :connection-manager cm
                  :body edn}))))))))

@@ -4,19 +4,25 @@
             [crdt-edit.control :as control]
             [clojure.core.async :as async]
             [crdt-edit.api.routes :as api]
-            [crdt-edit.discovery :as discovery]))
+            [crdt-edit.discovery :as discovery])
+  (:import java.net.InetAddress))
 
 (defn create
   "Creates an initial system"
-  [site collaborators port]
+  [site port]
   (let [outgoing (async/chan 10)
         incoming (async/chan 5)
         logoot-doc (logoot/create)
-        collaborators-atom (atom collaborators)
-        {:keys [logoot-swing-doc frame]} (frame/create site port logoot-doc outgoing collaborators-atom)]
+        ip-address (.getHostAddress (InetAddress/getLocalHost))
+        collaborators-atom (atom #{}
+                                 ;; Don't allow self as a collaborator
+                                 :validator #((complement %) (str ip-address ":" port)))
+        {:keys [logoot-swing-doc frame]} (frame/create site ip-address port logoot-doc outgoing collaborators-atom)]
     
-    {;; The web server that accepts updates.
+    {:ip-address ip-address
      :port port
+     
+     ;; The web server that accepts updates.
      :server (api/create-server port)
      
      ;; The java.swing.text.Document that handles typing updates

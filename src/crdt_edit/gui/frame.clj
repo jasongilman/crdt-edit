@@ -15,7 +15,7 @@
 (defn create
   "Creates an instance of the GUI. Returns a map of the swing document
   and the frame."
-  [site port logoot-doc outgoing collaborators-atom]
+  [site ip-address port logoot-doc outgoing collaborators-atom]
   
   (let [collaborators-text-area (sw/text :text (str/join ", " @collaborators-atom)
                                          :editable? true)
@@ -28,14 +28,14 @@
     (.setDocument text-area document)
     
     ;; Automatically update the collaborators text area when the collaborators change.
-    (add-watch collaborators-atom :collaborators
+    (add-watch collaborators-atom :collaborators-text-update
                (fn [_ _ _ collaborators]
                  (sw/text! collaborators-text-area (str/join ", " collaborators))))
     
     
     {:logoot-swing-doc document
      :frame  (sw/frame :title (format "CRDT Edit %s:%d for site %s" 
-                                      (.getHostAddress (InetAddress/getLocalHost)) port site)
+                                      ip-address port site)
                        :content (sw/top-bottom-split 
                                   (sw/horizontal-panel
                                     :items ["Collaborators (comma separated)" 

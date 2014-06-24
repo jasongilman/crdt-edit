@@ -23,5 +23,5 @@
 (defn -main
   [& args]
   (let [{{:keys [port site ip-address]} :options} (cli/parse-opts args cli-options)
-        system (system/start (system/create site port ip-address))]
+        system (system/start (system/create site port ip-address []))]
     (println "Running...")))

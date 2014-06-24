@@ -34,18 +34,7 @@
   [^long n1 ^long n2]
   (int (/ (+ n1 n2) 2)))
 
-;; Tests that the random between function generates a value between start and end
-;; exclusive other values.
-(defspec random-between-spec 1000
-  (for-all [betweens (gen/such-that
-                       (fn [[v1 v2]]
-                         (> (- v2 v1) 1))
-                       (gen/fmap sort 
-                                 (gen/tuple gen/int gen/int)))]
-    (let [[s e] betweens
-          middle-val (l/random-between s e)]
-      (< s middle-val e))))
-
+;; Checks that between any two positions another position can be found and inserted correctly
 (defspec intermediate-position-spec 1000
   (for-all [positions two-unique-positions-in-order
             site site-gen]

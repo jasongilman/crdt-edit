@@ -11,8 +11,7 @@
                  [ring "1.3.0"]
                  [ring/ring-jetty-adapter "1.3.0"]
                  [com.velisco/tagged "0.3.4"]
-                 [clj-http "0.9.2"]
-                 [javax.jmdns/jmdns "3.4.1"]]
+                 [clj-http "0.9.2"]]
   
   :profiles 
   {:dev {:source-paths ["dev" "src"]

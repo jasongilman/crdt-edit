@@ -4,19 +4,21 @@
             [crdt-edit.control :as control]
             [clojure.core.async :as async]
             [crdt-edit.api.routes :as api]
-            [crdt-edit.discovery :as discovery])
+            [clojure.set :as set]
+            [clj-http.client :as client])
   (:import java.net.InetAddress))
 
 (defn create
   "Creates an initial system"
-  [site port ip-address]
+  [site port ip-address collaborators]
   (let [outgoing (async/chan 10)
         incoming (async/chan 5)
         logoot-doc (logoot/create)
         ip-address (or ip-address (.getHostAddress (InetAddress/getLocalHost)))
-        collaborators-atom (atom #{}
+        collaborators-atom (atom (set collaborators)
                                  ;; Don't allow self as a collaborator
-                                 :validator #((complement %) (str ip-address ":" port)))
+                                 :validator (fn [current-value]
+                                              (nil? (get current-value (str ip-address ":" port)))))
         {:keys [logoot-swing-doc frame]} (frame/create site ip-address port logoot-doc outgoing collaborators-atom)]
     
     {:ip-address ip-address
@@ -39,9 +41,6 @@
      ;; List of host names of collaborating editors
      :collaborators collaborators-atom
      
-     ;; Allows discovery of other running editors
-     :discovery (discovery/create)
-     
      ;; Running flag is used to signal go blocks that we are done.
      :running-flag (atom false)}))
 
@@ -56,6 +55,22 @@
 (defn print-logoot-doc
   [system]
   (println (logoot/logoot-string (get-logoot-doc system))))
+
+(defn- notify-collaborotors-when-added
+  [system]
+  (add-watch 
+    (:collaborators system) 
+    :discovery-collaborators 
+    (fn [_ _ prev-collaborators new-collaborators]
+      (println (pr-str prev-collaborators) (pr-str new-collaborators))
+      (let [changed-collabs (set/difference new-collaborators prev-collaborators)
+            my-location (str (:ip-address system) ":" (:port system))]
+        (doseq [collaborator changed-collabs]
+          (when (not= my-location collaborator)
+            (println "Adding" my-location "as a collaborator to" collaborator)
+            (let [url (format "http://%s/collaborators" collaborator)]
+              (client/post url {:headers {:content-type "application/edn"}
+                                :body (pr-str my-location)}))))))))
 
 (defn start
   "Starts the system and returns it."
@@ -74,9 +89,9 @@
     ;; Display the GUI
     (frame/display frame)
     
-    (-> system
-        (update-in [:server] api/start-server system)
-        (update-in [:discovery] discovery/start system))))
+    (notify-collaborotors-when-added system)
+    
+    (update-in system [:server] api/start-server system)))
 
 (defn stop
   "Stops the system and returns it"
@@ -90,8 +105,6 @@
     ;; Hide the gui
     (frame/close frame)
     
-    (-> system
-        (update-in [:server] api/stop-server system)
-        (update-in [:discovery] discovery/stop system))))
+    (update-in system [:server] api/stop-server system)))
 
 

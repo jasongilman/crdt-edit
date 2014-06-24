@@ -22,6 +22,7 @@
   (compareTo 
     [pid1 pid2]
     ;; TODO implement comparable for PositionIdentifier
+    -1
     )
   
   ToLogootString
@@ -41,6 +42,7 @@
   (compareTo 
     [pos1 pos2]
     ;; TODO implement comparable for Position
+    -1
     )
   
   ToLogootString
@@ -64,6 +66,7 @@
   (compareTo 
     [pc1 pc2]
     ;; TODO implement comparable for PositionedCharacter
+    -1
     )
   
   ToLogootString

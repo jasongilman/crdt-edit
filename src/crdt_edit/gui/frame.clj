@@ -9,7 +9,7 @@
 (defn update-collborators
   [collaborators-text collaborators-atom]
   (println "Setting collaborators to" collaborators-text)
-  (let [collaborators (str/split collaborators-text #",\s*")]
+  (let [collaborators (set (str/split collaborators-text #",\s*"))]
     (reset! collaborators-atom collaborators)))
 
 (defn create

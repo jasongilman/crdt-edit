@@ -65,20 +65,6 @@
   found they will be added to the list of collaborators."
   [discovery-info system]
   
-  ;; Add a watch on the collaborators Atom. When it's updated we should tell the other
-  ;; collaborator manually
-  
-  (add-watch (:collaborators system) :discovery-collaborators 
-             (fn [_ _ prev-collaborators new-collaborators]
-               (let [changed-collabs (set/difference new-collaborators prev-collaborators)
-                     me (str (:ip-address system) ":" (:port system))]
-                 (doseq [collaborator changed-collabs]
-                   (when (not= me collaborator)
-                     (println "Adding" me "as a collaborator to" collaborator)
-                     (let [url (format "http://%s/collaborators" collaborator)]
-                       (client/post url {:headers {:content-type "application/edn"}
-                                         :body (pr-str me)})))))))
-  
   (let [jmdns (:jmdns discovery-info)
         service-listener (create-service-listener system)
         registered-service (create-service-info system)]
